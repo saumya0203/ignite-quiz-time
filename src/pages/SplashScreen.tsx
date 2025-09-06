@@ -7,7 +7,7 @@ const SplashScreen = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       navigate("/signup");
-    }, 2000);
+    }, 4000);
 
     return () => clearTimeout(timer);
   }, [navigate]);
@@ -15,14 +15,22 @@ const SplashScreen = () => {
   return (
     <div className="min-h-screen bg-surface flex items-center justify-center">
       <div className="text-center">
-        <div className="flex items-center justify-center mb-4">
+        <div className="flex items-center justify-center mb-6">
           {/* GDGC Logo */}
-          <div className="flex">
-            <div className="w-8 h-8 bg-blue rounded-l-lg flex items-center justify-center">
-              <div className="w-4 h-4 bg-white rounded-sm transform rotate-45"></div>
-            </div>
-            <div className="w-8 h-8 bg-orange rounded-r-lg flex items-center justify-center">
-              <div className="w-4 h-4 bg-white rounded-sm transform -rotate-45"></div>
+          <div className="relative">
+            <div className="flex items-center">
+              <div className="w-16 h-16 bg-blue rounded-2xl flex items-center justify-center shadow-lg">
+                <div className="text-white text-2xl font-bold">G</div>
+              </div>
+              <div className="w-16 h-16 bg-orange rounded-2xl flex items-center justify-center shadow-lg -ml-2">
+                <div className="text-white text-2xl font-bold">D</div>
+              </div>
+              <div className="w-16 h-16 bg-green rounded-2xl flex items-center justify-center shadow-lg -ml-2">
+                <div className="text-white text-2xl font-bold">G</div>
+              </div>
+              <div className="w-16 h-16 bg-purple rounded-2xl flex items-center justify-center shadow-lg -ml-2">
+                <div className="text-white text-2xl font-bold">C</div>
+              </div>
             </div>
           </div>
         </div>

@@ -19,13 +19,14 @@ const Quiz = () => {
   const location = useLocation();
   const quizCode = location.state?.quizCode || "";
   
-  const [step, setStep] = useState("name"); // name, quiz, leaderboard
+  const [step, setStep] = useState("name"); // name, quiz, question-leaderboard, final-leaderboard
   const [displayName, setDisplayName] = useState("");
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(15);
   const [showAnswer, setShowAnswer] = useState(false);
   const [scores, setScores] = useState<number[]>([]);
+  const [fastestAnswerer, setFastestAnswerer] = useState<{name: string, time: number} | null>(null);
 
   // Mock quiz data
   const questions: Question[] = [
@@ -64,11 +65,11 @@ const Quiz = () => {
     if (step === "quiz" && timeLeft > 0) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
-    } else if (timeLeft === 0 && !showAnswer) {
-      setShowAnswer(true);
-      setTimeout(() => {
-        handleNextQuestion();
-      }, 3000);
+    } else if (timeLeft === 0 && !showAnswer && step === "quiz") {
+      // Time up, show question leaderboard
+      setScores([...scores, 0]); // No points for time up
+      setFastestAnswerer({ name: "Sarah M.", time: 2 }); // Mock fastest answerer
+      setStep("question-leaderboard");
     }
   }, [timeLeft, showAnswer, step]);
 
@@ -81,7 +82,6 @@ const Quiz = () => {
   const handleAnswerSelect = (answerIndex: number) => {
     if (showAnswer) return;
     setSelectedAnswer(answerIndex);
-    setShowAnswer(true);
     
     // Calculate score based on time and correctness
     const isCorrect = answerIndex === questions[currentQuestion].correctAnswer;
@@ -89,9 +89,12 @@ const Quiz = () => {
     const score = isCorrect ? 100 + timeBonus : 0;
     setScores([...scores, score]);
     
-    setTimeout(() => {
-      handleNextQuestion();
-    }, 3000);
+    // Set fastest answerer (mock data for demo)
+    const responseTime = questions[currentQuestion].timeLimit - timeLeft;
+    setFastestAnswerer({ name: displayName, time: responseTime });
+    
+    // Show question leaderboard
+    setStep("question-leaderboard");
   };
 
   const handleNextQuestion = () => {
@@ -100,8 +103,9 @@ const Quiz = () => {
       setSelectedAnswer(null);
       setShowAnswer(false);
       setTimeLeft(questions[currentQuestion + 1].timeLimit);
+      setStep("quiz");
     } else {
-      setStep("leaderboard");
+      setStep("final-leaderboard");
     }
   };
 
@@ -148,7 +152,65 @@ const Quiz = () => {
     );
   }
 
-  if (step === "leaderboard") {
+  if (step === "question-leaderboard") {
+    const currentQuestionData = questions[currentQuestion];
+    const currentLeaderboard = [
+      { name: "Davis Curtis", score: 1800 + (currentQuestion * 200), avatar: "👨‍💻", position: 1 },
+      { name: "Alena Donin", score: 1200 + (currentQuestion * 180), avatar: "👩‍🎓", position: 2 },
+      { name: displayName, score: scores.reduce((a, b) => a + b, 0), avatar: "👤", position: 3 },
+      { name: "Craig Gouse", score: 800 + (currentQuestion * 150), avatar: "👨‍🚀", position: 4 },
+    ].sort((a, b) => b.score - a.score).map((player, index) => ({ ...player, position: index + 1 }));
+
+    return (
+      <div className="min-h-screen bg-green flex flex-col p-6">
+        <div className="text-center mb-6 text-white">
+          <h1 className="text-xl font-bold mb-2">Question {currentQuestion + 1} Results</h1>
+          <div className="bg-orange text-orange-foreground px-4 py-2 rounded-full inline-block mb-4">
+            Correct Answer: {String.fromCharCode(65 + currentQuestionData.correctAnswer)}. {currentQuestionData.options[currentQuestionData.correctAnswer]}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl p-4 mb-6">
+          <div className="text-center mb-4">
+            <Trophy className="w-8 h-8 mx-auto mb-2 text-orange" />
+            <h2 className="font-bold text-lg">Fastest Answer</h2>
+            <div className="text-sm text-muted-foreground">
+              {fastestAnswerer?.name} - {fastestAnswerer?.time}s
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-3 mb-6">
+          <h3 className="text-white font-bold text-lg text-center">Current Leaderboard</h3>
+          {currentLeaderboard.map((player) => (
+            <Card key={player.name} className="bg-white">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-4">
+                  <span className="text-xl font-bold w-8">{player.position}</span>
+                  <div className="w-12 h-12 bg-purple rounded-full flex items-center justify-center text-xl">
+                    {player.avatar}
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-bold">{player.name}</div>
+                    <div className="text-muted-foreground text-sm">{player.score} points</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <Button 
+          onClick={handleNextQuestion}
+          className="w-full h-14 text-lg font-semibold rounded-xl bg-orange hover:bg-orange/90 text-orange-foreground"
+        >
+          {currentQuestion < questions.length - 1 ? "Next Question" : "View Final Results"}
+        </Button>
+      </div>
+    );
+  }
+
+  if (step === "final-leaderboard") {
     return (
       <div className="min-h-screen bg-green flex flex-col p-6">
         <div className="flex items-center justify-between mb-6 text-white">
@@ -294,19 +356,6 @@ const Quiz = () => {
           </CardContent>
         </Card>
 
-        {showAnswer && (
-          <Card className="bg-green text-green-foreground">
-            <CardContent className="p-4 text-center">
-              <Trophy className="w-8 h-8 mx-auto mb-2" />
-              <div className="font-bold">
-                {selectedAnswer === question.correctAnswer ? "Correct!" : "Wrong answer"}
-              </div>
-              <div className="text-sm">
-                Correct answer: {String.fromCharCode(65 + question.correctAnswer)}. {question.options[question.correctAnswer]}
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </div>
   );
