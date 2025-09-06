@@ -27,6 +27,8 @@ const Quiz = () => {
   const [showAnswer, setShowAnswer] = useState(false);
   const [scores, setScores] = useState<number[]>([]);
   const [fastestAnswerer, setFastestAnswerer] = useState<{name: string, time: number} | null>(null);
+  const [hasAnswered, setHasAnswered] = useState(false);
+  const [leaderboardTimer, setLeaderboardTimer] = useState(10);
 
   // Mock quiz data
   const questions: Question[] = [
@@ -65,13 +67,25 @@ const Quiz = () => {
     if (step === "quiz" && timeLeft > 0) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
-    } else if (timeLeft === 0 && !showAnswer && step === "quiz") {
+    } else if (timeLeft === 0 && step === "quiz") {
       // Time up, show question leaderboard
-      setScores([...scores, 0]); // No points for time up
-      setFastestAnswerer({ name: "Sarah M.", time: 2 }); // Mock fastest answerer
+      if (!hasAnswered) {
+        setScores([...scores, 0]); // No points for time up
+        setFastestAnswerer({ name: "Sarah M.", time: 2 }); // Mock fastest answerer
+      }
       setStep("question-leaderboard");
+      setLeaderboardTimer(10);
     }
-  }, [timeLeft, showAnswer, step]);
+  }, [timeLeft, step, hasAnswered, scores]);
+
+  useEffect(() => {
+    if (step === "question-leaderboard" && leaderboardTimer > 0) {
+      const timer = setTimeout(() => setLeaderboardTimer(leaderboardTimer - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (leaderboardTimer === 0 && step === "question-leaderboard") {
+      handleNextQuestion();
+    }
+  }, [leaderboardTimer, step]);
 
   const handleStartQuiz = () => {
     if (!displayName.trim()) return;
@@ -80,8 +94,9 @@ const Quiz = () => {
   };
 
   const handleAnswerSelect = (answerIndex: number) => {
-    if (showAnswer) return;
+    if (hasAnswered) return;
     setSelectedAnswer(answerIndex);
+    setHasAnswered(true);
     
     // Calculate score based on time and correctness
     const isCorrect = answerIndex === questions[currentQuestion].correctAnswer;
@@ -92,9 +107,6 @@ const Quiz = () => {
     // Set fastest answerer (mock data for demo)
     const responseTime = questions[currentQuestion].timeLimit - timeLeft;
     setFastestAnswerer({ name: displayName, time: responseTime });
-    
-    // Show question leaderboard
-    setStep("question-leaderboard");
   };
 
   const handleNextQuestion = () => {
@@ -102,6 +114,7 @@ const Quiz = () => {
       setCurrentQuestion(currentQuestion + 1);
       setSelectedAnswer(null);
       setShowAnswer(false);
+      setHasAnswered(false);
       setTimeLeft(questions[currentQuestion + 1].timeLimit);
       setStep("quiz");
     } else {
@@ -200,12 +213,17 @@ const Quiz = () => {
           ))}
         </div>
 
-        <Button 
-          onClick={handleNextQuestion}
-          className="w-full h-14 text-lg font-semibold rounded-xl bg-orange hover:bg-orange/90 text-orange-foreground"
-        >
-          {currentQuestion < questions.length - 1 ? "Next Question" : "View Final Results"}
-        </Button>
+        <div className="text-center">
+          <div className="text-white text-lg font-semibold mb-2">
+            {currentQuestion < questions.length - 1 ? "Next Question" : "Final Results"} in {leaderboardTimer}s
+          </div>
+          <div className="w-full bg-white/20 rounded-full h-2">
+            <div 
+              className="bg-orange h-2 rounded-full transition-all duration-1000"
+              style={{ width: `${(leaderboardTimer / 10) * 100}%` }}
+            ></div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -334,16 +352,10 @@ const Quiz = () => {
                 <Button
                   key={index}
                   onClick={() => handleAnswerSelect(index)}
-                  disabled={showAnswer}
+                  disabled={hasAnswered}
                   variant="outline"
                   className={`w-full h-14 text-left p-4 justify-start text-wrap ${
-                    showAnswer
-                      ? index === question.correctAnswer
-                        ? "bg-green text-green-foreground border-green"
-                        : selectedAnswer === index
-                        ? "bg-destructive text-destructive-foreground border-destructive"
-                        : ""
-                      : selectedAnswer === index
+                    selectedAnswer === index && hasAnswered
                       ? "bg-orange text-orange-foreground border-orange"
                       : ""
                   }`}
@@ -355,6 +367,15 @@ const Quiz = () => {
             </div>
           </CardContent>
         </Card>
+
+        {hasAnswered && (
+          <div className="text-center p-4 bg-orange/10 rounded-xl border border-orange/20">
+            <div className="text-orange font-semibold mb-1">Answer Submitted!</div>
+            <div className="text-muted-foreground text-sm">
+              Waiting for timer to finish... {timeLeft}s remaining
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
