@@ -36,7 +36,25 @@ All colors MUST be HSL.
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
+
+    /* Quiz App Colors */
+    --orange: 28 100% 57%;
+    --orange-foreground: 0 0% 100%;
+    --green: 142 69% 58%;
+    --green-foreground: 0 0% 100%;
+    --pink: 330 81% 60%;
+    --pink-foreground: 0 0% 100%;
+    --purple: 262 83% 58%;
+    --purple-foreground: 0 0% 100%;
+    --blue: 217 91% 60%;
+    --blue-foreground: 0 0% 100%;
+    --yellow: 48 96% 53%;
+    --yellow-foreground: 0 0% 0%;
+
+    /* Surface colors */
+    --surface: 0 0% 98%;
+    --surface-foreground: 222.2 84% 4.9%;
 
     --sidebar-background: 0 0% 98%;
 
